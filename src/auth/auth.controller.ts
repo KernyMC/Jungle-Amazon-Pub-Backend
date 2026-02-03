@@ -103,4 +103,35 @@ export class AuthController {
       throw new BadRequestException('Something went wrong: ' + error.message);
     }
   }
+
+  @Post('verify-session')
+  @HttpCode(HttpStatus.OK)
+  async verifySession(@Body() body: { sessionCookie?: string }) {
+    const { sessionCookie } = body;
+
+    if (!sessionCookie) {
+      throw new UnauthorizedException('No session cookie provided');
+    }
+
+    try {
+      const decodedCookie =
+        await this.firebaseService.auth.verifySessionCookie(sessionCookie);
+      const user = await this.firebaseService.auth.getUser(decodedCookie.uid);
+
+      return {
+        success: true,
+        user: {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+        },
+        isAdmin: decodedCookie.admin === true,
+      };
+    } catch (error) {
+      throw new UnauthorizedException(
+        'Invalid session: ' + (error as Error).message,
+      );
+    }
+  }
 }
