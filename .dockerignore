@@ -24,13 +24,14 @@ logs
 coverage
 .nyc_output
 
-# Firebase credentials (se montan como secretos)
+# Firebase credentials (DEBEN incluirse en el build)
 *.json
 !package.json
 !package-lock.json
 !tsconfig.json
 !tsconfig.build.json
 !nest-cli.json
+!jungle--pub-firebase-adminsdk-fbsvc-c83cceeb2a.json
 
 # Misc
 README.md
