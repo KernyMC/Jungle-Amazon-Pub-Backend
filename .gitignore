@@ -50,5 +50,5 @@ lerna-debug.log*
 !tsconfig.json
 !tsconfig.build.json
 !nest-cli.json
-!jungle--pub-firebase-adminsdk-fbsvc-c83cceeb2a.json
+!google_credentials.json
 package-lock.json

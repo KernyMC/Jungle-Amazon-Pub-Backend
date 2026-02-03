@@ -1,14 +1,42 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
-import serviceAccountJson from '../../jungle--pub-firebase-adminsdk-fbsvc-c83cceeb2a.json';
 
 @Injectable()
 export class FirebaseService implements OnModuleInit {
   private app!: admin.app.App;
 
+  constructor(private configService: ConfigService) {}
+
   onModuleInit() {
     if (!admin.apps.length) {
-      const serviceAccount = { ...serviceAccountJson };
+      // Try to load from environment variable first
+      const serviceAccountEnv = this.configService.get<string>(
+        'FIREBASE_SERVICE_ACCOUNT',
+      );
+
+      let serviceAccount: any;
+
+      if (serviceAccountEnv) {
+        // Load from environment variable (production)
+        try {
+          serviceAccount = JSON.parse(serviceAccountEnv);
+        } catch (error) {
+          throw new Error(
+            'Invalid FIREBASE_SERVICE_ACCOUNT JSON: ' + error.message,
+          );
+        }
+      } else {
+        // Try to load from file (development fallback)
+        try {
+          serviceAccount = require('../../google_credentials.json');
+        } catch (error) {
+          throw new Error(
+            'Firebase credentials not found. Set FIREBASE_SERVICE_ACCOUNT environment variable or add credentials file.',
+          );
+        }
+      }
+
       this.app = admin.initializeApp({
         credential: admin.credential.cert(
           serviceAccount as admin.ServiceAccount,
