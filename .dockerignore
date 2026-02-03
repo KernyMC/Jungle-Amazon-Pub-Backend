@@ -1,0 +1,37 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+
+# Git
+.git
+.gitignore
+
+# Environment files (se pasan como variables de entorno en Docker)
+.env
+.env.*
+
+# IDE
+.vscode
+.idea
+
+# Logs
+*.log
+logs
+
+# Tests
+coverage
+.nyc_output
+
+# Firebase credentials (se montan como secretos)
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!tsconfig.build.json
+!nest-cli.json
+
+# Misc
+README.md
+*.md
