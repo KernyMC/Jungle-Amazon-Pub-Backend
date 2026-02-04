@@ -29,7 +29,7 @@ export class FirebaseService implements OnModuleInit {
       } else {
         // Try to load from file (development fallback)
         try {
-          serviceAccount = require('../../google_credentials.json');
+          serviceAccount = require('../../jungle--pub-firebase-adminsdk-fbsvc-930299d838.json');
         } catch (error) {
           throw new Error(
             'Firebase credentials not found. Set FIREBASE_SERVICE_ACCOUNT environment variable or add credentials file.',

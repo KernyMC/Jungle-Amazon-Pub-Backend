@@ -31,7 +31,7 @@ coverage
 !tsconfig.json
 !tsconfig.build.json
 !nest-cli.json
-!google_credentials.json
+!jungle--pub-firebase-adminsdk-fbsvc-930299d838.json
 
 # Misc
 README.md

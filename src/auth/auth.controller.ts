@@ -125,6 +125,10 @@ export class AuthController {
           email: user.email,
           displayName: user.displayName,
           photoURL: user.photoURL,
+          metadata: {
+            creationTime: user.metadata.creationTime,
+            lastSignInTime: user.metadata.lastSignInTime,
+          },
         },
         isAdmin: decodedCookie.admin === true,
       };
