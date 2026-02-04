@@ -8,7 +8,12 @@ async function bootstrap() {
   app.use(cookieParser());
 
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:4321',
+    origin: [
+      'http://localhost:4321',
+      'https://junglaamazonpub.ec',
+      'https://www.junglaamazonpub.ec',
+      process.env.FRONTEND_URL,
+    ].filter(Boolean),
     credentials: true,
   });
 
