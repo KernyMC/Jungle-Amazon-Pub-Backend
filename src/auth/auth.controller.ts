@@ -43,12 +43,14 @@ export class AuthController {
         { expiresIn: fiveDays },
       );
 
+      const isProduction = process.env.NODE_ENV === 'production';
       res.cookie('__session', sessionCookie, {
         path: '/',
         maxAge: 60 * 60 * 24 * 5 * 1000,
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'lax',
+        domain: isProduction ? '.junglaamazonpub.ec' : undefined,
       });
 
       return { success: true };
@@ -67,12 +69,14 @@ export class AuthController {
   @Post('signout')
   @HttpCode(HttpStatus.OK)
   signout(@Res({ passthrough: true }) res: Response) {
+    const isProduction = process.env.NODE_ENV === 'production';
     res.cookie('__session', '', {
       path: '/',
       maxAge: 0,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      domain: isProduction ? '.junglaamazonpub.ec' : undefined,
     });
     return { success: true };
   }

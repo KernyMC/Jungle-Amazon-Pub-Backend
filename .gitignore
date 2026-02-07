@@ -52,3 +52,4 @@ lerna-debug.log*
 !nest-cli.json
 !jungle--pub-firebase-adminsdk-fbsvc-930299d838.json
 package-lock.json
+jungle--pub-firebase-adminsdk-fbsvc-930299d838.json
