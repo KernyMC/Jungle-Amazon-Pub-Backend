@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { FirebaseService } from '../firebase/firebase.service.js';
 import type { UserProfile } from '../common/types/index.js';
 
@@ -17,7 +18,10 @@ export class AdminService {
     return this.db.collection('users');
   }
 
-  constructor(private firebaseService: FirebaseService) {}
+  constructor(
+    private firebaseService: FirebaseService,
+    private configService: ConfigService,
+  ) {}
 
   async listUsers(limit = 100, pageToken?: string) {
     const listUsersResult = await this.firebaseService.auth.listUsers(
@@ -94,10 +98,14 @@ export class AdminService {
   }
 
   async setupFirstAdmin(email: string, secretKey: string) {
-    const SETUP_SECRET = 'jungle-admin-setup-2024';
+    const SETUP_SECRET = this.configService.get<string>('ADMIN_SETUP_SECRET');
 
     if (!email || !secretKey) {
       throw new BadRequestException('Email y secretKey son requeridos');
+    }
+
+    if (!SETUP_SECRET) {
+      throw new ForbiddenException('Setup no configurado');
     }
 
     if (secretKey !== SETUP_SECRET) {
