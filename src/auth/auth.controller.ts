@@ -11,6 +11,7 @@ import {
   BadRequestException,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { FirebaseService } from '../firebase/firebase.service.js';
 import type { Request, Response } from 'express';
 
@@ -20,6 +21,7 @@ export class AuthController {
 
   @Post('signin')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ strict: { ttl: 60_000, limit: 10 } })
   async signin(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const authHeader = req.headers.authorization;
     const idToken = authHeader?.split('Bearer ')[1];
@@ -30,10 +32,8 @@ export class AuthController {
 
     try {
       await this.firebaseService.auth.verifyIdToken(idToken, false);
-    } catch (error) {
-      throw new UnauthorizedException(
-        'Invalid token: ' + (error as Error).message,
-      );
+    } catch {
+      throw new UnauthorizedException('Token inválido');
     }
 
     const fiveDays = 60 * 60 * 24 * 5 * 1000;
@@ -54,10 +54,8 @@ export class AuthController {
       });
 
       return { success: true };
-    } catch (error) {
-      throw new InternalServerErrorException(
-        'Failed to create session: ' + (error as Error).message,
-      );
+    } catch {
+      throw new InternalServerErrorException('Error al crear la sesión');
     }
   }
 
@@ -87,6 +85,7 @@ export class AuthController {
   }
 
   @Post('register')
+  @Throttle({ strict: { ttl: 60_000, limit: 5 } })
   async register(
     @Body() body: { email?: string; password?: string; name?: string },
   ) {
@@ -103,8 +102,8 @@ export class AuthController {
         displayName: name,
       });
       return { success: true, message: 'Usuario creado exitosamente' };
-    } catch (error: any) {
-      throw new BadRequestException('Something went wrong: ' + error.message);
+    } catch {
+      throw new BadRequestException('No se pudo crear la cuenta. Verifica los datos e intenta de nuevo.');
     }
   }
 
@@ -136,10 +135,8 @@ export class AuthController {
         },
         isAdmin: decodedCookie.admin === true,
       };
-    } catch (error) {
-      throw new UnauthorizedException(
-        'Invalid session: ' + (error as Error).message,
-      );
+    } catch {
+      throw new UnauthorizedException('Sesión inválida');
     }
   }
 }

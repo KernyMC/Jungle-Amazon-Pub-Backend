@@ -29,11 +29,10 @@ export class OrdersController {
     @Query('status') status?: string,
     @Query('limit') limit?: string,
   ) {
-    return this.ordersService.findAll(
-      user,
-      status,
-      limit ? parseInt(limit) : 50,
-    );
+    const VALID_STATUSES = ['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'cancelled'];
+    const safeStatus = status && VALID_STATUSES.includes(status) ? status : undefined;
+    const safeLimit = Math.min(Math.max(parseInt(limit ?? '50') || 50, 1), 100);
+    return this.ordersService.findAll(user, safeStatus, safeLimit);
   }
 
   @Get(':id')

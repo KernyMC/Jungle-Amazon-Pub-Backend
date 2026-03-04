@@ -6,6 +6,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AdminService } from './admin.service.js';
 import { AuthGuard } from '../common/guards/auth.guard.js';
 import { AdminGuard } from '../common/guards/admin.guard.js';
@@ -33,6 +34,7 @@ export class AdminController {
   }
 
   @Post('setup-first-admin')
+  @Throttle({ strict: { ttl: 3_600_000, limit: 3 } })
   setupFirstAdmin(@Body() body: { email: string; secretKey: string }) {
     return this.adminService.setupFirstAdmin(body.email, body.secretKey);
   }

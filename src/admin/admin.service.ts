@@ -178,10 +178,19 @@ export class AdminService {
       .limit(10)
       .get();
 
-    const recentOrders = recentOrdersSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const recentOrders = recentOrdersSnapshot.docs.map((doc) => {
+      const d = doc.data();
+      return {
+        id: doc.id,
+        status: d['status'],
+        total: d['total'],
+        subtotal: d['subtotal'],
+        discount: d['discount'],
+        couponCode: d['couponCode'],
+        createdAt: d['createdAt'],
+        itemsCount: Array.isArray(d['items']) ? d['items'].length : 0,
+      };
+    });
 
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);

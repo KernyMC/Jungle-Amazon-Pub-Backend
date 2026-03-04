@@ -10,6 +10,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { CouponsService } from './coupons.service.js';
 import { AuthGuard } from '../common/guards/auth.guard.js';
 import { AdminGuard } from '../common/guards/admin.guard.js';
@@ -58,6 +59,7 @@ export class CouponsController {
 
   @Post('validate')
   @UseGuards(AuthGuard)
+  @Throttle({ strict: { ttl: 60_000, limit: 10 } })
   validate(@Body() dto: ValidateCouponDto, @CurrentUser() user: DecodedUser) {
     return this.couponsService.validate(dto, user.uid);
   }
