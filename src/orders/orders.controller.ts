@@ -16,7 +16,7 @@ import { AuthGuard } from '../common/guards/auth.guard.js';
 import { AdminGuard } from '../common/guards/admin.guard.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import type { DecodedUser } from '../common/types/index.js';
-import type { CreateOrderDto, UpdateOrderDto } from './dto/create-order.dto.js';
+import { CreateOrderDto, UpdateOrderDto } from './dto/create-order.dto.js';
 
 @Controller('orders')
 @UseGuards(AuthGuard)
