@@ -5,6 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { FirebaseService } from '../firebase/firebase.service.js';
+import { FieldValue } from 'firebase-admin/firestore';
 import type {
   Order,
   OrderStatus,
@@ -30,6 +31,10 @@ export class OrdersService {
 
   private get couponsCollection() {
     return this.firebaseService.firestore.collection('coupons');
+  }
+
+  private get userCouponsCollection() {
+    return this.firebaseService.firestore.collection('userCoupons');
   }
 
   constructor(private firebaseService: FirebaseService) {}
@@ -118,19 +123,35 @@ export class OrdersService {
         const validFrom = new Date(coupon.validFrom);
         const validUntil = new Date(coupon.validUntil);
 
-        if (
+        const couponValid =
           coupon.isActive &&
           now >= validFrom &&
           now <= validUntil &&
           (!coupon.maxUses || coupon.usedCount < coupon.maxUses) &&
-          (!coupon.minPurchase || subtotal >= coupon.minPurchase)
-        ) {
+          (!coupon.minPurchase || subtotal >= coupon.minPurchase);
+
+        if (couponValid) {
           discount =
             coupon.type === 'percentage'
-              ? (subtotal * coupon.value) / 100
+              ? Math.min((subtotal * coupon.value) / 100, subtotal)
               : Math.min(coupon.value, subtotal);
 
-          await couponDoc.ref.update({ usedCount: coupon.usedCount + 1 });
+          // Atomic increment — prevents double-spend race condition
+          await couponDoc.ref.update({ usedCount: FieldValue.increment(1) });
+
+          // Mark the user's claimed coupon as used
+          const userCouponSnapshot = await this.userCouponsCollection
+            .where('userId', '==', user.uid)
+            .where('couponCode', '==', couponCode.toUpperCase())
+            .where('usedAt', '==', null)
+            .limit(1)
+            .get();
+
+          if (!userCouponSnapshot.empty) {
+            await userCouponSnapshot.docs[0].ref.update({
+              usedAt: now.toISOString(),
+            });
+          }
         } else {
           couponCode = undefined;
         }
@@ -139,7 +160,7 @@ export class OrdersService {
       }
     }
 
-    const total = subtotal - discount;
+    const total = Math.max(0, subtotal - discount);
 
     const newOrder: Omit<Order, 'id'> = {
       userId: user.uid,
@@ -214,6 +235,34 @@ export class OrdersService {
     }
 
     await docRef.update(updateData);
+
+    // Decrement coupon usedCount when an order with coupon is cancelled
+    if (dto.status === 'cancelled' && order.couponCode) {
+      const couponSnapshot = await this.couponsCollection
+        .where('code', '==', order.couponCode.toUpperCase())
+        .limit(1)
+        .get();
+
+      if (!couponSnapshot.empty) {
+        const couponDoc = couponSnapshot.docs[0];
+        const coupon = couponDoc.data() as Coupon;
+        if (coupon.usedCount > 0) {
+          await couponDoc.ref.update({ usedCount: FieldValue.increment(-1) });
+        }
+      }
+
+      // Restore the user's claimed coupon to unused state
+      const userCouponSnapshot = await this.userCouponsCollection
+        .where('userId', '==', order.userId)
+        .where('couponCode', '==', order.couponCode.toUpperCase())
+        .limit(1)
+        .get();
+
+      if (!userCouponSnapshot.empty) {
+        await userCouponSnapshot.docs[0].ref.update({ usedAt: null });
+      }
+    }
+
     const updatedDoc = await docRef.get();
     return { id: updatedDoc.id, ...updatedDoc.data() } as Order;
   }

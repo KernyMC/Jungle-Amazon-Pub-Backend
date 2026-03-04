@@ -126,7 +126,11 @@ export class CouponsService {
     return { message: 'Cupón eliminado correctamente' };
   }
 
-  async validate(dto: ValidateCouponDto): Promise<CouponValidation> {
+  private get userCouponsCollection() {
+    return this.firebaseService.firestore.collection('userCoupons');
+  }
+
+  async validate(dto: ValidateCouponDto, userId?: string): Promise<CouponValidation> {
     if (!dto.code) {
       return { valid: false, message: 'Código de cupón requerido' };
     }
@@ -148,7 +152,11 @@ export class CouponsService {
     }
 
     const now = new Date();
-    const todayStr = now.toISOString().split('T')[0];
+    // Use Ecuador timezone (UTC-5) for all date/time comparisons
+    const ecuadorTime = new Date(
+      now.toLocaleString('en-US', { timeZone: 'America/Guayaquil' }),
+    );
+    const todayStr = ecuadorTime.toISOString().split('T')[0];
     const validFromDate = coupon.validFrom.split('T')[0];
     const validUntilDate = coupon.validUntil.split('T')[0];
 
@@ -165,7 +173,7 @@ export class CouponsService {
       coupon.validUntilTime && coupon.validUntilTime !== null;
 
     if (hasFromTime || hasUntilTime) {
-      const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+      const currentTime = `${ecuadorTime.getHours().toString().padStart(2, '0')}:${ecuadorTime.getMinutes().toString().padStart(2, '0')}`;
 
       if (hasFromTime && currentTime < coupon.validFromTime!) {
         return {
@@ -187,6 +195,19 @@ export class CouponsService {
         valid: false,
         message: 'Este cupón ha alcanzado el límite de usos',
       };
+    }
+
+    // Check if this specific user has already used the coupon
+    if (userId) {
+      const alreadyUsed = await this.userCouponsCollection
+        .where('userId', '==', userId)
+        .where('couponCode', '==', coupon.code)
+        .where('usedAt', '!=', null)
+        .limit(1)
+        .get();
+      if (!alreadyUsed.empty) {
+        return { valid: false, message: 'Ya usaste este cupón anteriormente' };
+      }
     }
 
     if (

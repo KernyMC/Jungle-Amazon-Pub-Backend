@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsBoolean,
   Min,
+  Max,
   MaxLength,
   Matches,
 } from 'class-validator';
@@ -22,6 +23,7 @@ export class CreateCouponDto {
 
   @IsNumber()
   @Min(0)
+  @Max(100, { message: 'El descuento porcentual no puede superar el 100%' })
   value!: number;
 
   @IsOptional()
@@ -81,6 +83,7 @@ export class UpdateCouponDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Max(100, { message: 'El descuento porcentual no puede superar el 100%' })
   value?: number;
 
   @IsOptional()

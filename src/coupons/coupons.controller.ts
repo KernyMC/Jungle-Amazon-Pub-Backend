@@ -58,7 +58,7 @@ export class CouponsController {
 
   @Post('validate')
   @UseGuards(AuthGuard)
-  validate(@Body() dto: ValidateCouponDto) {
-    return this.couponsService.validate(dto);
+  validate(@Body() dto: ValidateCouponDto, @CurrentUser() user: DecodedUser) {
+    return this.couponsService.validate(dto, user.uid);
   }
 }
