@@ -8,7 +8,9 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Security middleware
-  app.use(helmet());
+  // crossOriginOpenerPolicy desactivado: Firebase signInWithPopup necesita
+  // comunicarse con la ventana principal desde un popup cross-origin
+  app.use(helmet({ crossOriginOpenerPolicy: false }));
   app.use(cookieParser());
 
   // Global validation pipe
