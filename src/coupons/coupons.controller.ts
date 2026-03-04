@@ -15,7 +15,7 @@ import { AuthGuard } from '../common/guards/auth.guard.js';
 import { AdminGuard } from '../common/guards/admin.guard.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import type { DecodedUser } from '../common/types/index.js';
-import type {
+import {
   CreateCouponDto,
   UpdateCouponDto,
   ValidateCouponDto,
